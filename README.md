@@ -237,8 +237,21 @@ find /lib/modules/$(uname -r)/kernel/ -type f -name "*.ko"
     Las URL generadas de nuestras pruebas son las siguientes:
     - https://linux-hardware.org/?probe=9356aa062b
     - https://linux-hardware.org/?probe=ce24a88f4f
-5) .
-6) .
+5) ¿Qué diferencia existe entre un módulo y un programa?
+
+   Tomando las definiciones dadas [previamente](#qué-funciones-tiene-disponible-un-programa-y-un-módulo) podemos identificar como diferencias que:
+   
+   - Los programas se ejecutan en entornos de usuario mientras que los módulos operan en espacio de kernel.
+   - Los módulos no tienen acceso a bibliotecas estándar, sino que solo pueden acceder a las funciones que el kernel les proporciona.
+   - Los programas están aislados del kernel mientras que los módulos tienen los privilegios del mismo.
+   - Los programas acceden a los recursos mediante llamadas de sistema, los módulos tienen control directo sobre el hardware.
+ 
+6) ¿Cómo puede ver una lista de las llamadas al sistema que realiza un simple helloworld en c?
+
+Para ver las llamadas al sistema realizadas por cualquier programa utilizamos la herramienta *strace* pasando como argumento el programa a ejecutar. Un ejemplo de salida con el programa *hello* que se encuentra en el directorio src/ se muestra a continuación:
+
+![strace](img/E02.png)
+
 7) .
 8) .
 9) .
@@ -247,7 +260,7 @@ find /lib/modules/$(uname -r)/kernel/ -type f -name "*.ko"
 
 - **¿Cuál fue la consecuencia principal del parche de Microsoft sobre GRUB en sistemas con arranque dual (Linux y Windows)?**
 
-    Los sistemas ya no podian iniciar Linux debido a una violacion de politica de seguridad del Secure Boot.
+    Los sistemas ya no podían iniciar Linux debido a una violación de política de seguridad del Secure Boot.
 
     
 - **¿Qué implicancia tiene desactivar Secure Boot como solución al problema descrito en el artículo?**
