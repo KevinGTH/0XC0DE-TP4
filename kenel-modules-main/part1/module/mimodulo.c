@@ -4,6 +4,9 @@ MODULE_LICENSE("GPL"); 	/*  Licencia del modulo */
 MODULE_DESCRIPTION("Primer modulo ejemplo");
 MODULE_AUTHOR("Catedra de SdeC");
 
+void modulo_lin_clean(void);
+int modulo_lin_init(void);
+
 /* Función que se invoca cuando se carga el módulo en el kernel */
 int modulo_lin_init(void)
 {
