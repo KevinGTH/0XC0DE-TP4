@@ -9,6 +9,11 @@ En ausencia de módulos, el enfoque predominante se inclina hacia los núcleos m
 
 Este enfoque da lugar a núcleos más grandes y requiere la reconstrucción del núcleo y el subsiguiente reinicio del sistema cuando se desean nuevas funcionalidades.
 
+Para comenzar vamos a necesitar instalar algunas dependencias:
+```
+sudo apt-get install build-essential checkinstall kernel-package linux-source
+```
+
 ### **¿Qué es checkinstall y para qué sirve?**
 
 Generalmente en entorno Linux, cuando se compila software desde un código fuente, el proceso es casi siempre el mismo. 
@@ -140,3 +145,104 @@ Además, los dispositivos se dividen en dos categorias:
 - Dispositivos de bloque: son identificados con una 'b' cuando ponemos el comando **ls -l** por ejemplo el */dev/sda1*. Esto significa que manejan datos en bloques y usan buffers para optimizar operaciones.
 
 - Dispositivos de caracteres: son identificados con una 'c', por ejemplo: /dev/ttyS0. Estos dispositivos manejan flujos de datos sin un tamaño fijo, un uso general es en puertos seriales.
+
+## Segunda parte
+Es importante que toda nuestra ruta no contenga ningun caracter especial ni espacios, ya que esto genera un error al ejecutar el comando "make".
+
+### Insertar y visualizar mimodulo.ko
+Luego de esto, debemos ejecutar los siguientes comandos:
+``` 
+cd kenel-modules-main/part1/module
+make
+```
+
+Notamos que al ejecutar al make se genera la siguiente advertencia:
+![advertencia de falta de headers](img/05.png)
+
+Por lo que para solucionarla simplemente agregamos los **prototipos** de las funciones en nuestro programa [mimodulo.c](kenel-modules-main/part1/module/mimodulo.c), por lo que queda de la siguiente manera:
+![programa corregido](img/06.png)
+
+Ahora ejecutamos lo siguiente: 
+``` 
+sudo insmod mimodulo.ko
+```
+Este comando, inserta el módulo "mimodulo.ko" en el kernel.
+
+Y después mostramos los mensajes del "kernel ring buffer" utilizando lo siguiente:
+``` 
+sudo dmesg
+```
+Lo que nos muestra una extensa lista de todos los modulos cargados en el kernel.
+
+Para poder filtrar la lista y mostrar unicamente aquellos que contengan en su nombre "mimodulo", utilizamos el comando **lsmod | grep mimodulo** para verificar que se cargó exitosamente.
+![modulo cargado](img/07.png)
+Otra manera de ver si nuestro módulo se cargó exitosamente es utilizar **cat /proc/modules | grep mimodulo** y visualizamos la siguiente salida por consola:
+![modulo cargado 2](img/09.png)
+
+### Comparación entre nuestro módulo cargado y otro generico
+Para realizar este paso primero tenemos que elegir un módulo generico, en nuestro caso elegimos el **amdgpu.ko.zst** que se encuentra en */lib/modules/6.8.0-60-generic/kernel/drivers/gpu/drm/amd/amdgpu*.
+
+Para compararlos utilizamos el siguiente comando y contrastamos las diferencias:
+``` 
+modinfo mimodulo.ko
+modinfo amdgpu.ko.zst
+```
+![comparacion de modulos](img/10.png)
+
+El segundo módulo está cortado ya que contiene demasiada información adicional extra.
+
+### Consignas
+1) ¿Qué diferencias se pueden observar entre los dos modinfo?
+
+    Este comando refleja el contraste entre un módulo de ejemplo simple que fué desarrollado localmente y un driver de dispositivo complejo y altamente integrado que forma parte del kernel oficial de Linux
+
+2) ¿Qué divers/modulos estan cargados en sus propias pc? 
+
+    Para poder hacer esto, estando en el directorio de "0XC0DE-TP4", vamos a ejecutar el siguiente comando con el que vamos a cargar toda la lista de los modulos/drivers en nuestra carpeta outputs:
+    ``` 
+    lsmod > outputs/modulos_cargados0.txt
+    ```
+   Y para ver las diferencias utilizamos la pagina [diff checker](https://www.diffchecker.com/) cuya salida es la siguiente:
+
+3) .
+4) Correr hwinfo en una pc real con hw real y agregar la url de la información de hw en el reporte.
+    
+5) En nuestro caso utilizamos la herramienta de https://linux-hardware.org/ y ejecutamos lo siguiente:
+    ``` 
+    sudo -E hw-probe -all -upload
+    ```
+    Lo que crea una prueba de información sobre nuestro hardware actual.
+    
+    El link a la URL generada de nuestra prueba es la siguiente: https://linux-hardware.org/?probe=9356aa062b
+5) .
+6) .
+7) .
+8) .
+9) .
+10) .
+11) Basado en la siguiente nota https://arstechnica.com/security/2024/08/a-patch-microsoft-spent-2-years-preparing-is-making-a-mess-for-some-linux-users/ :
+
+- **¿Cuál fue la consecuencia principal del parche de Microsoft sobre GRUB en sistemas con arranque dual (Linux y Windows)?**
+
+    Los sistemas ya no podian iniciar Linux debido a una violacion de politica de seguridad del Secure Boot.
+
+    
+- **¿Qué implicancia tiene desactivar Secure Boot como solución al problema descrito en el artículo?**
+
+    Desactivar Secure Boot implica comprometer la seguridad del sistema, ya que Secure Boot impide la carga de código no firmado durante el arranque. Al desactivarlo para permitir la carga de controladores o módulos que el parche de Microsoft bloquea, se abre la posibilidad de que malware o rootkits se carguen sin restricciones al iniciar el sistema.
+
+- **¿Cuál es el propósito principal del Secure Boot en el proceso de arranque de un sistema?**
+
+    Verificar que solo se ejecuten binarios firmados y autorizados durante el arranque.
+### Borrar el modulo cargado
+Una vez que comprobamos que el módulo se cargó, lo vamos a remover y vamos a comprobar que ya no existe utilizando lo siguiente:
+``` 
+sudo rmmod mimodulo
+sudo dmesg
+lsmod | grep mimodulo
+```
+![modulo borrado](img/08.png)
+Notamos que ahora la consola no devuelve nada y esto se debe a que el módulo cargado anteriormente ya no existe en el kernel.
+
+
+
