@@ -259,7 +259,38 @@ Para ver las llamadas al sistema realizadas por cualquier programa utilizamos la
 
 ![strace](img/E02.png)
 
-7) .
+7) .¿Qué es un segmentation fault?
+   
+Un segmentation fault (o “fallo de segmentación”) ocurre cuando un programa intenta acceder a una zona de memoria que no tiene derecho a utilizar. El sistema operativo protege ciertas áreas de memoria, y si un proceso se sale de su espacio permitido, ocurre este tipo de error.
+
+En términos simples: es como si un programa intentara entrar a una habitación cerrada sin permiso. El sistema operativo, actuando como "guardia", lo detecta y termina al programa por seguridad.
+
+ ¿Cómo maneja esto el kernel de Linux?
+
+- Cada proceso corre en su **espacio de usuario** (user space), separado del resto.
+
+- Cuando un programa comete un acceso inválido a memoria, el **MMU (Memory Management Unit)** del CPU detecta que se intentó leer o escribir en una dirección no permitida.
+
+- El hardware genera una **excepción de tipo "page fault"**.
+
+- El kernel intercepta esa excepción y determina que es un acceso inválido.
+
+- El kernel envía al proceso una **señal SIGSEGV** (Signal Segmentation Violation).
+
+- Si el programa **no atrapa la señal**, el proceso es **terminado inmediatamente**.
+
+- Opcionalmente, se puede generar un **core dump**, un volcado del contenido de la memoria, para ser analizado con GDB u otras herramientas.
+
+¿Cómo maneja esto un programa?
+
+Cuando un programa accede a memoria inválida (por ejemplo, accede a un puntero nulo o fuera de los límites del arreglo), el sistema operativo envía una señal al proceso: SIGSEGV (Signal: Segmentation Violation).
+
+Por defecto, esta señal hace que:
+
+- El programa termine inmediatamente.
+
+- El sistema puede (opcionalmente) generar un archivo de volcado de memoria (core dump) para diagnóstico.
+
 8) .
 9) .
 10) .
