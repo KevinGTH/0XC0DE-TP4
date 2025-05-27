@@ -355,6 +355,10 @@ sudo mokutil --import signing_key.der
 
 Cuando ejecutemos este comando se nos pedirá que insertemos una contraseña, es importante que la recordemos. Una vez hecho esto debemos reiniciar el sistema, al hacerlo se nos presentará un menú en una pantalla azul, en este debemos seleccionar la opción **Enroll MOK** donde MOK significa *Machine Owner Key*. Una vez seleccionado esto debemos buscar la clave que generamos (En teoría debería ser la única) y se nos pedirá ingresar la contraseña que generamos previamente. 
 
+![Pantalla menú de carga de MOK 1](img/E08.jpeg)
+
+![Pantalla menú de carga de MOK 2](img/E07.jpeg)
+
 Finalizado este proceso continuamos con el reboot y ahora sí, al cargar nuestro módulo con *inmod* veremos que el mismo ya no aparece con el símbolo **E**, indicando que el módulo tiene una clave válida.
 
 ![modulo firmado](img/E06.png)
