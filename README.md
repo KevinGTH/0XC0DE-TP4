@@ -363,7 +363,16 @@ Finalizado este proceso continuamos con el reboot y ahora sí, al cargar nuestro
 
 ![modulo firmado](img/E06.png)
 
-9) .
+9) Agregar evidencia de la compilación, carga y descarga de su propio módulo imprimiendo el nombre del equipo en los registros del kernel.
+
+Para esto se modifico localmente el archivo fuente de mimodulo.ko para que imprima los mensajes solicitados. Se vuelve a compilar, cargar y descargar el módulo como se muestra a continuación:
+
+![Compilación, carga y descarga del módulo](img/E09.png)
+
+Ahora ejecutando el comando `dmesg` se observan los registros del kernel, donde se pueden encontrar los mensajes solicitados:
+
+![Salida acortada de dmesg](img/E10.png)
+
 10) .¿Que pasa si mi compañero con secure boot habilitado intenta cargar un módulo firmado por mi? 
 
 Si mi compañero tiene Secure Boot activado, su sistema solo permite cargar módulos del kernel que estén firmados digitalmente con una clave reconocida como segura. Esto forma parte de una medida de seguridad que evita la ejecución de código malicioso a bajo nivel (como rootkits).
