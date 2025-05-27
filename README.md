@@ -182,7 +182,6 @@ Para poder filtrar la lista y mostrar unicamente aquellos que contengan en su no
 Otra manera de ver si nuestro módulo se cargó exitosamente es utilizar **cat /proc/modules | grep mimodulo** y visualizamos la siguiente salida por consola:
 ![modulo cargado 2](img/09.png)
 
-
 ### Comparación entre nuestro módulo cargado y otro genérico
 
 Para realizar este paso primero tenemos que elegir un módulo genérico, en nuestro caso elegimos el **amdgpu.ko.zst** que se encuentra en */lib/modules/6.8.0-60-generic/kernel/drivers/gpu/drm/amd/amdgpu*.
@@ -291,7 +290,75 @@ Por defecto, esta señal hace que:
 
 - El sistema puede (opcionalmente) generar un archivo de volcado de memoria (core dump) para diagnóstico.
 
-8) .
+8) ¿Se animan a intentar firmar un módulo de kernel ? y documentar el proceso ?
+
+Lo primero que debemos hacer para firmar un módulo es verificar las configuraciones del kernel para firmar módulos. Para ello debemos acceder a */usr/src/kernel-headers-$(uname -r)* (El directorio exacto puede variar entre sistemas). Una vez dentro de este directorio debemos leer el archivo *.config* y verificar los valores **CONFIG_MODULE_SIG**.
+
+![Resultado de cat .config | grep CONfIG_MODULE_SIG](img/E03.png)
+
+Las opciones que aparecen son:
+
+- CONFIG_MODULE_SIG: Habilita las utilidades de firma de módulos.
+- CONFIG_MODULE_SIG_FORCE: Si está habilitado solo se podrán cargar módulos firmados.
+- CONFIG_MODULE_SIG_ALL: Si está habilitado los módulos se firmarán automáticamente durante la instalación, sino deberán ser firmados manualmente con un script que se verá más adelante.
+- CONFIG_MODULE_SIG_SHA512: Indica que el algoritmo de hasheo que se utilizará sera el SHA512. Las lineas anteriores son para otros algoritmos que en este caso están desactivados.
+- CONFIG_MODULE_SIG_HASH: Idem al anterior. Indica que algoritmo se utilizará.
+- CONFIG_MODULE_SIG_KEY: Dirección del archivo .pem que contiene la clave privada y las credenciales. El valor por defecto es certs/signing_key.pem, si el valor se cambia por cualquier otro no se podrá utilizar la firma automática de módulos.
+
+Lo más importante para lo que buscamos hacer es CONFIG_MODULE_SIG_HASH ya que nos indica el algoritmo que debemos utilizar para firmar el módulo.
+
+Ahora sí para firmar el módulo debemos primero generar un par de claves público/privada lo que podemos hacer con openssl:
+
+```
+openssl req -new -x509 -newkey rsa:2048 -keyout signing_key.pem -out signing_key.pem   -nodes -days 36500 -subj "/CN=My Module Signing Key/"
+```
+
+Esto generará un archivo *signign_key.pom* en el directorio actual. A continuación podemos utilizar este par de claves para firmar el módulo utilizando un script del kernel que se encuentra en el directorio *usr/src/kernel-headers-$(uname -r)/scripts/sign-file*:
+
+```
+/usr/src/linux-headers-$(uname -r)/scripts/sign-file sha512 signing_key.pem signing_key.pem mimodulo.ko
+```
+
+Notese que el argumento *sha512* se corresponde al valor que se encontraba en CONFIG_MODULE_SIG_HASH. Podemos verificar que el módul ofue firmado ejecutando:
+
+```
+modinfo mimodulo.ko
+```
+
+La salida deberá ser similar a esta:
+
+![modinfo output](img/E05.png)
+
+Si los parámetros *sig* no están presentes entonces el módulo no fue firmado. Ahora si cargamos el módulo y ejecutamos *cat /proc/modules | grep mimodulo* seguiremos viendo una salida como esta:
+
+![Módulo sin firma válida](img/E04.png)
+
+El símbolo **(OE)** indica 2 cosas:
+
+- O: El módulo proviene de un lugar externo al árbol (Out-Of-Tree)
+- E: No se puede verificar la firma del módulo (Errors in signature verification)
+
+Esto se debe a que aunque el módulo este firmado el mismo no pertenece al *keyring* de claves confiables del kernel.
+
+Para agregar la firma al *keyring* del kernel primero debemos separar nuestro archivo .pem ya que el mismo contiene tanto clave pública como privada y el *keyring* del kernel solo admite las claves públicas o archivos .der. Para obtener este archivo obtenendremos las credenciales del archivo .pem y luego las convertiremos en un archivo .der como se muestra a continuación.
+
+```
+openssl x509 -in signing_key.pem -outform PEM -out signing_key.crt
+openssl x509 -in signing_key.crt -outform DER -out signing_key.der
+```
+
+Ya generado este archivo utilizaremos el comando *mokutil* para cargar la clave al *keyring*:
+
+```
+sudo mokutil --import signing_key.der
+```
+
+Cuando ejecutemos este comando se nos pedirá que insertemos una contraseña, es importante que la recordemos. Una vez hecho esto debemos reiniciar el sistema, al hacerlo se nos presentará un menú en una pantalla azul, en este debemos seleccionar la opción **Enroll MOK** donde MOK significa *Machine Owner Key*. Una vez seleccionado esto debemos buscar la clave que generamos (En teoría debería ser la única) y se nos pedirá ingresar la contraseña que generamos previamente. 
+
+Finalizado este proceso continuamos con el reboot y ahora sí, al cargar nuestro módulo con *inmod* veremos que el mismo ya no aparece con el símbolo **E**, indicando que el módulo tiene una clave válida.
+
+![modulo firmado](img/E06.png)
+
 9) .
 10) .¿Que pasa si mi compañero con secure boot habilitado intenta cargar un módulo firmado por mi? 
 
